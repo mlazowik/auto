@@ -43,8 +43,8 @@ sumAccepting aut1 _ (Left q) = isAccepting aut1 q
 sumAccepting _ aut2 (Right q) = isAccepting aut2 q
 
 sumTransition :: Auto a q1 -> Auto a q2 -> Either q1 q2 -> a -> [Either q1 q2]
-sumTransition aut1 _ (Left q) = Left <$> transition aut1 q
-sumTransition _ aut2 (Right q) = Right <$> transition aut2 q
+sumTransition aut1 _ (Left q) c = Left <$> transition aut1 q c
+sumTransition _ aut2 (Right q) c = Right <$> transition aut2 q c
 
 sumA :: Auto a q1 -> Auto a q2 -> Auto a (Either q1 q2)
 sumA aut1 aut2 = A {
@@ -52,4 +52,21 @@ sumA aut1 aut2 = A {
 , initStates = (Left <$> initStates aut1) ++ (Right <$> initStates aut2)
 , isAccepting = sumAccepting aut1 aut2
 , transition = sumTransition aut1 aut2
+}
+
+thenAccepting :: Auto a q2 -> Either q1 q2 -> Bool
+thenAccepting _ (Left _) = False
+thenAccepting aut2 (Right q) = isAccepting aut2 q
+
+thenTransition :: Auto a q1 -> Auto a q2 -> Either q1 q2 -> a -> [Either q1 q2]
+thenTransition aut1 aut2 (Left q) c | or $ isAccepting aut1 <$> transition aut1 q c = (Right <$> initStates aut2) ++ (Left <$> transition aut1 q c)
+                                    | otherwise = Left <$> transition aut1 q c
+thenTransition _ aut2 (Right q) c = Right <$> transition aut2 q c
+
+thenA :: Auto a q1 -> Auto a q2 -> Auto a (Either q1 q2)
+thenA aut1 aut2 = A{
+  states = (Left <$> states aut1) ++ (Right <$> states aut2)
+, initStates = Left <$> initStates aut1
+, isAccepting = thenAccepting aut2
+, transition = thenTransition aut1 aut2
 }
