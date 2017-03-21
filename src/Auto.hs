@@ -1,4 +1,14 @@
-module Auto where
+module Auto
+(
+  Auto
+, accepts
+, emptyA
+, epsA
+, leftA
+, symA
+, sumA
+, thenA
+) where
 
 import qualified Data.List as List
 
