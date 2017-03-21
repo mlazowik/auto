@@ -8,6 +8,7 @@ module Auto
 , symA
 , sumA
 , thenA
+, fromLists
 ) where
 
 import qualified Data.List as List
@@ -82,4 +83,12 @@ thenA aut1 aut2 = A{
 , initStates = Left <$> initStates aut1
 , isAccepting = thenAccepting aut2
 , transition = thenTransition aut1 aut2
+}
+
+fromLists :: (Eq q, Eq a) => [q] -> [q] -> [q] -> [(q,a,[q])] -> Auto a q
+fromLists s i a t = A {
+  states = s
+, initStates = i
+, isAccepting = (`elem` a)
+, transition = \ q c -> concatMap (\ (qq, cc, x) -> if q == qq && c == cc then x else []) t
 }
