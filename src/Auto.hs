@@ -1,5 +1,7 @@
 module Auto where
 
+import qualified Data.List as List
+
 data Auto a q = A {
   states :: [q]
 , initStates :: [q]
@@ -7,7 +9,8 @@ data Auto a q = A {
 , transition :: q -> a -> [q]
 }
 
--- accepts :: (Eq q) => Auto a q -> [a] -> Bool
+accepts :: (Eq q) => Auto a q -> [a] -> Bool
+accepts aut w = or $ isAccepting aut <$> foldr (\ c s -> List.nub $ concat $ flip (transition aut) c <$> s ) (initStates aut) w
 
 emptyA :: Auto a ()
 emptyA = A {states=[], initStates=[], isAccepting = const False, transition = \ _ _ -> []}
