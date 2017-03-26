@@ -22,7 +22,7 @@ data Auto a q = A {
 }
 
 accepts :: (Eq q) => Auto a q -> [a] -> Bool
-accepts aut w = any (isAccepting aut) (foldr (\ c s -> List.nub $ concat $ flip (transition aut) c <$> s ) (initStates aut) w)
+accepts aut w = any (isAccepting aut) (foldl (\ s c -> List.nub $ concat $ flip (transition aut) c <$> s ) (initStates aut) w)
 
 emptyA :: Auto a ()
 emptyA = A {states=[], initStates=[], isAccepting = const False, transition = \ _ _ -> []}
