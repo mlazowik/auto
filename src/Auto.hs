@@ -9,6 +9,7 @@ module Auto
 , sumA
 , thenA
 , fromLists
+, toLists
 ) where
 
 import qualified Data.List as List
@@ -75,3 +76,6 @@ fromLists s i a t = A {
 , isAccepting = (`elem` a)
 , transition = \ q c -> concatMap (\ (qq, cc, x) -> if q == qq && c == cc then x else []) t
 }
+
+toLists :: (Enum a, Bounded a) => Auto a q -> ([q],[q],[q],[(q,a,[q])])
+toLists aut = (states aut, initStates aut, filter (isAccepting aut) (states aut), filter (\ (_, _, qs) -> not $ null qs) (map (\ (q, c) -> (q, c, transition aut q c)) [ (q, c) | q <- states aut, c <- [minBound..] ]))
