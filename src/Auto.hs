@@ -22,7 +22,7 @@ data Auto a q = A {
 }
 
 accepts :: (Eq q) => Auto a q -> [a] -> Bool
-accepts aut w = any (isAccepting aut) (foldl (\ s c -> List.nub $ concat $ flip (transition aut) c <$> s ) (initStates aut) w)
+accepts aut w = any (isAccepting aut) (List.foldl' (\ s c -> List.nub $ concat $ flip (transition aut) c <$> s ) (initStates aut) w)
 
 emptyA :: Auto a ()
 emptyA = A {states=[], initStates=[], isAccepting = const False, transition = \ _ _ -> []}
@@ -54,8 +54,7 @@ sumA aut1 aut2 = A {
 }
 
 thenTransition :: Auto a q1 -> Auto a q2 -> Either q1 q2 -> a -> [Either q1 q2]
-thenTransition aut1 aut2 (Left q) c | any (isAccepting aut1) (transition aut1 q c) = (Left <$> transition aut1 q c) ++ (Right <$> initStates aut2)
-                                    | otherwise = Left <$> transition aut1 q c
+thenTransition aut1 aut2 (Left q) c = (Left <$> transition aut1 q c) ++ (if any (isAccepting aut1) (transition aut1 q c) then Right <$> initStates aut2 else [])
 thenTransition _ aut2 (Right q) c = Right <$> transition aut2 q c
 
 hasAcceptingInitState :: Auto a q -> Bool
