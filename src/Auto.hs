@@ -1,6 +1,6 @@
 module Auto
 (
-  Auto
+  Auto -- FIXME: remove before returning the task
 , accepts
 , emptyA
 , epsA
@@ -36,52 +36,35 @@ symTransition c q a | not q && a == c = [True]
 symA :: (Eq a) => a -> Auto a Bool
 symA c = A {states = [True, False], initStates = [False], isAccepting = id, transition = symTransition c}
 
-leftAccepting :: Auto a q -> Either q r -> Bool
-leftAccepting aut (Left q) = isAccepting aut q
-leftAccepting _ _ = False
-
-leftTransition :: Auto a q ->  Either q r -> a -> [Either q r]
-leftTransition aut (Left q) c = Left <$> transition aut q c
-leftTransition _ _ _ = []
-
 leftA :: Auto a q -> Auto a (Either q r)
 leftA aut = A {
   states = Left <$> states aut
 , initStates = Left <$> initStates aut
-, isAccepting = leftAccepting aut
-, transition = leftTransition aut
+, isAccepting = either (isAccepting aut) (const False)
+, transition = either (\ q c -> Left <$> transition aut q c) (\ _ _ -> [])
 }
-
-sumAccepting :: Auto a q1 -> Auto a q2 -> Either q1 q2 -> Bool
-sumAccepting aut1 _ (Left q) = isAccepting aut1 q
-sumAccepting _ aut2 (Right q) = isAccepting aut2 q
-
-sumTransition :: Auto a q1 -> Auto a q2 -> Either q1 q2 -> a -> [Either q1 q2]
-sumTransition aut1 _ (Left q) c = Left <$> transition aut1 q c
-sumTransition _ aut2 (Right q) c = Right <$> transition aut2 q c
 
 sumA :: Auto a q1 -> Auto a q2 -> Auto a (Either q1 q2)
 sumA aut1 aut2 = A {
   states = (Left <$> states aut1) ++ (Right <$> states aut2)
 , initStates = (Left <$> initStates aut1) ++ (Right <$> initStates aut2)
-, isAccepting = sumAccepting aut1 aut2
-, transition = sumTransition aut1 aut2
+, isAccepting = either (isAccepting aut1) (isAccepting aut2)
+, transition = either (\ q c -> Left <$> transition aut1 q c) (\ q c -> Right <$> transition aut2 q c)
 }
 
-thenAccepting :: Auto a q2 -> Either q1 q2 -> Bool
-thenAccepting _ (Left _) = False
-thenAccepting aut2 (Right q) = isAccepting aut2 q
-
 thenTransition :: Auto a q1 -> Auto a q2 -> Either q1 q2 -> a -> [Either q1 q2]
-thenTransition aut1 aut2 (Left q) c | or $ isAccepting aut1 <$> transition aut1 q c = (Right <$> initStates aut2) ++ (Left <$> transition aut1 q c)
+thenTransition aut1 aut2 (Left q) c | any (isAccepting aut1) (transition aut1 q c) = (Left <$> transition aut1 q c) ++ (Right <$> initStates aut2)
                                     | otherwise = Left <$> transition aut1 q c
 thenTransition _ aut2 (Right q) c = Right <$> transition aut2 q c
+
+hasAcceptingInitState :: Auto a q -> Bool
+hasAcceptingInitState aut = any (isAccepting aut) (initStates aut)
 
 thenA :: Auto a q1 -> Auto a q2 -> Auto a (Either q1 q2)
 thenA aut1 aut2 = A{
   states = (Left <$> states aut1) ++ (Right <$> states aut2)
-, initStates = Left <$> initStates aut1
-, isAccepting = thenAccepting aut2
+, initStates = (Left <$> initStates aut1) ++ (if hasAcceptingInitState aut1 then Right <$> initStates aut2 else [])
+, isAccepting = either (if hasAcceptingInitState aut2 then isAccepting aut1 else const False) (isAccepting aut2)
 , transition = thenTransition aut1 aut2
 }
 
