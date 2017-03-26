@@ -82,5 +82,4 @@ toLists aut = (
   states aut,
   initStates aut,
   filter (isAccepting aut) (states aut),
-  filter (\ (_, _, qs) -> not $ null qs) (map (\ (q, c) -> (q, c, transition aut q c)) [ (q, c) | q <- states aut, c <- [minBound..] ])
-)
+  filter (\ (_, _, qs) -> not $ null qs) (map (\ (q, c) -> (q, c, transition aut q c)) [ (q, c) | q <- states aut, c <- [minBound..] ]))
