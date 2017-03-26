@@ -53,10 +53,6 @@ sumA aut1 aut2 = A {
 , transition = either (\ q c -> Left <$> transition aut1 q c) (\ q c -> Right <$> transition aut2 q c)
 }
 
-thenTransition :: Auto a q1 -> Auto a q2 -> Either q1 q2 -> a -> [Either q1 q2]
-thenTransition aut1 aut2 (Left q) c = (Left <$> transition aut1 q c) ++ (if any (isAccepting aut1) (transition aut1 q c) then Right <$> initStates aut2 else [])
-thenTransition _ aut2 (Right q) c = Right <$> transition aut2 q c
-
 hasAcceptingInitState :: Auto a q -> Bool
 hasAcceptingInitState aut = any (isAccepting aut) (initStates aut)
 
@@ -65,7 +61,7 @@ thenA aut1 aut2 = A{
   states = (Left <$> states aut1) ++ (Right <$> states aut2)
 , initStates = (Left <$> initStates aut1) ++ (if hasAcceptingInitState aut1 then Right <$> initStates aut2 else [])
 , isAccepting = either (if hasAcceptingInitState aut2 then isAccepting aut1 else const False) (isAccepting aut2)
-, transition = thenTransition aut1 aut2
+, transition = either (\ q c -> (Left <$> transition aut1 q c) ++ (if any (isAccepting aut1) (transition aut1 q c) then Right <$> initStates aut2 else [])) (\ q c -> Right <$> transition aut2 q c)
 }
 
 fromLists :: (Eq q, Eq a) => [q] -> [q] -> [q] -> [(q,a,[q])] -> Auto a q
