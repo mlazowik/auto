@@ -92,9 +92,12 @@ fromLists s i a t = A {
 , transition = \ q c -> concatMap (\ (qq, cc, x) -> if q == qq && c == cc then x else []) t
 }
 
+notTrash :: (q, a, [q]) -> Bool
+notTrash (_, _, qs) = not $ null qs
+
 toLists :: (Enum a, Bounded a) => Auto a q -> ([q],[q],[q],[(q,a,[q])])
 toLists aut = (
   states aut,
   initStates aut,
   filter (isAccepting aut) (states aut),
-  filter (\ (_, _, qs) -> not $ null qs) (map (\ (q, c) -> (q, c, transition aut q c)) [ (q, c) | q <- states aut, c <- [minBound..] ]))
+  filter notTrash (map (\ (q, c) -> (q, c, transition aut q c)) [ (q, c) | q <- states aut, c <- [minBound..] ]))
