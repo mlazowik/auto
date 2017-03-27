@@ -38,12 +38,13 @@ emptyA = A {states=[], initStates=[], isAccepting = const False, transition = tr
 epsA :: Auto a ()
 epsA = A {states=[()], initStates = [()], isAccepting = const True, transition = trashTransition}
 
-symTransition :: (Eq a) => a -> Bool -> a -> [Bool]
-symTransition c q a | not q && a == c = [True]
-                    | otherwise = []
-
 symA :: (Eq a) => a -> Auto a Bool
-symA c = A {states = [True, False], initStates = [False], isAccepting = id, transition = symTransition c}
+symA c = A {
+  states = [True, False],
+  initStates = [False],
+  isAccepting = id,
+  transition = \ q a -> [True | not q && a == c]
+}
 
 leftTransition :: Auto a q -> q -> a -> [Either q r]
 leftTransition aut q c = Left <$> transition aut q c
