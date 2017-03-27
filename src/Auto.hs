@@ -84,14 +84,7 @@ fromLists s i a t =
   { states = s
   , initStates = i
   , isAccepting = (`elem` a)
-  , transition =
-      \q c ->
-        concatMap
-          (\(qq, cc, qs) ->
-             if q == qq && c == cc
-               then qs
-               else [])
-          t
+  , transition = \q c -> concat [ qs | (qq, cc, qs) <- t, qq == q, cc == c ]
   }
 
 toLists
