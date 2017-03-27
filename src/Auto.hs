@@ -1,6 +1,6 @@
 module Auto
 (
-  Auto -- FIXME: remove before returning the task
+  Auto
 , accepts
 , emptyA
 , epsA
@@ -87,7 +87,7 @@ fromLists s i a t = A {
   states = s
 , initStates = i
 , isAccepting = (`elem` a)
-, transition = \ q c -> concatMap (\ (qq, cc, x) -> if q == qq && c == cc then x else []) t
+, transition = \ q c -> concatMap (\ (qq, cc, qs) -> if q == qq && c == cc then qs else []) t
 }
 
 notTrash :: (q, a, [q]) -> Bool
