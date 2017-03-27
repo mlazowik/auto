@@ -24,15 +24,12 @@ instance (Show a, Enum a, Bounded a, Show q) =>
          Show (Auto a q) where
   show = show . toLists
 
-transitions
-  :: (Functor t, Foldable t, Eq q)
-  => Auto a q -> t q -> a -> [q]
-transitions aut fromStates c = List.nub $ concat $ flip (transition aut) c <$> fromStates
-
 accepts
   :: (Eq q)
   => Auto a q -> [a] -> Bool
-accepts aut w = any (isAccepting aut) (List.foldl' (transitions aut) (initStates aut) w)
+accepts aut w = any (isAccepting aut) (List.foldl' transitions (initStates aut) w)
+  where
+    transitions fromStates c = List.nub $ concat $ flip (transition aut) c <$> fromStates
 
 emptyA :: Auto a ()
 emptyA = A {states = [], initStates = [], isAccepting = const False, transition = const . const []}
@@ -64,21 +61,20 @@ sumA aut1 aut2 =
   , transition = either ((fmap Left .) . transition aut1) ((fmap Right .) . transition aut2)
   }
 
-addLeftToRight :: Auto a q1 -> Auto a q2 -> [q1] -> [Either q1 q2]
-addLeftToRight aut1 aut2 leftStates =
-  (Left <$> leftStates) ++
-  (if any (isAccepting aut1) leftStates
-     then Right <$> initStates aut2
-     else [])
-
 thenA :: Auto a q1 -> Auto a q2 -> Auto a (Either q1 q2)
 thenA aut1 aut2 =
   A
   { states = (Left <$> states aut1) ++ (Right <$> states aut2)
-  , initStates = addLeftToRight aut1 aut2 (initStates aut1)
+  , initStates = addLeftToRight (initStates aut1)
   , isAccepting = either (const False) (isAccepting aut2)
-  , transition = either ((addLeftToRight aut1 aut2 .) . transition aut1) ((fmap Right .) . transition aut2)
+  , transition = either ((addLeftToRight .) . transition aut1) ((fmap Right .) . transition aut2)
   }
+  where
+    addLeftToRight leftStates =
+      (Left <$> leftStates) ++
+      (if any (isAccepting aut1) leftStates
+         then Right <$> initStates aut2
+         else [])
 
 fromLists
   :: (Eq q, Eq a)
@@ -98,9 +94,6 @@ fromLists s i a t =
           t
   }
 
-notTrash :: (q, a, [q]) -> Bool
-notTrash (_, _, qs) = not $ null qs
-
 toLists
   :: (Enum a, Bounded a)
   => Auto a q -> ([q], [q], [q], [(q, a, [q])])
@@ -109,3 +102,5 @@ toLists aut =
   , initStates aut
   , filter (isAccepting aut) (states aut)
   , filter notTrash (map (\(q, c) -> (q, c, transition aut q c)) [(q, c) | q <- states aut, c <- [minBound ..]]))
+  where
+    notTrash (_, _, qs) = not $ null qs
