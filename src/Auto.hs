@@ -34,13 +34,11 @@ accepts
   => Auto a q -> [a] -> Bool
 accepts aut w = any (isAccepting aut) (List.foldl' (transitions aut) (initStates aut) w)
 
-trashTransition _ _ = []
-
 emptyA :: Auto a ()
-emptyA = A {states = [], initStates = [], isAccepting = const False, transition = trashTransition}
+emptyA = A {states = [], initStates = [], isAccepting = const False, transition = const . const []}
 
 epsA :: Auto a ()
-epsA = A {states = [()], initStates = [()], isAccepting = const True, transition = trashTransition}
+epsA = A {states = [()], initStates = [()], isAccepting = const True, transition = const . const []}
 
 symA
   :: (Eq a)
@@ -54,7 +52,7 @@ leftA aut =
   { states = Left <$> states aut
   , initStates = Left <$> initStates aut
   , isAccepting = either (isAccepting aut) (const False)
-  , transition = either ((fmap Left .) . transition aut) trashTransition
+  , transition = either ((fmap Left .) . transition aut) (const . const [])
   }
 
 sumA :: Auto a q1 -> Auto a q2 -> Auto a (Either q1 q2)
