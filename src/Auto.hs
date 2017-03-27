@@ -71,7 +71,7 @@ nextAccepting aut q c = any (isAccepting aut) (transition aut q c)
 leftToRightTransition :: Auto a q1 -> Auto a q2 -> q1 -> a -> [Either q1 q2]
 leftToRightTransition aut1 aut2 q c = if nextAccepting aut1 q c then Right <$> initStates aut2 else []
 
-concatTransition :: (t1 -> t -> [a]) -> (t1 -> t -> [a]) -> t1 -> t -> [a]
+concatTransition :: (q -> a -> [q1]) -> (q -> a -> [q1]) -> q -> a -> [q1]
 concatTransition t1 t2 q c = t1 q c ++ t2 q c
 
 thenA :: Auto a q1 -> Auto a q2 -> Auto a (Either q1 q2)
