@@ -46,18 +46,12 @@ symA c = A {
   transition = \ q a -> [True | not q && a == c]
 }
 
-leftTransition :: Auto a q -> q -> a -> [Either q r]
-leftTransition aut q c = Left <$> transition aut q c
-
-rightTransition :: Auto a q -> q -> a -> [Either l q]
-rightTransition aut q c = Right <$> transition aut q c
-
 leftA :: Auto a q -> Auto a (Either q r)
 leftA aut = A {
   states = Left <$> states aut
 , initStates = Left <$> initStates aut
 , isAccepting = either (isAccepting aut) (const False)
-, transition = either (leftTransition aut) trashTransition
+, transition = either ((fmap Left .) . transition aut) trashTransition
 }
 
 sumA :: Auto a q1 -> Auto a q2 -> Auto a (Either q1 q2)
@@ -65,7 +59,7 @@ sumA aut1 aut2 = A {
   states = (Left <$> states aut1) ++ (Right <$> states aut2)
 , initStates = (Left <$> initStates aut1) ++ (Right <$> initStates aut2)
 , isAccepting = either (isAccepting aut1) (isAccepting aut2)
-, transition = either (leftTransition aut1) (rightTransition aut2)
+, transition = either ((fmap Left .) . transition aut1) ((fmap Right .) . transition aut2)
 }
 
 hasAcceptingInitState :: Auto a q -> Bool
@@ -85,7 +79,7 @@ thenA aut1 aut2 = A{
   states = (Left <$> states aut1) ++ (Right <$> states aut2)
 , initStates = (Left <$> initStates aut1) ++ (if hasAcceptingInitState aut1 then Right <$> initStates aut2 else [])
 , isAccepting = either (if hasAcceptingInitState aut2 then isAccepting aut1 else const False) (isAccepting aut2)
-, transition = either (concatTransition (leftTransition aut1) (leftToRightTransition aut1 aut2)) (rightTransition aut2)
+, transition = either (concatTransition ((fmap Left .) . transition aut1) (leftToRightTransition aut1 aut2)) ((fmap Right .) . transition aut2)
 }
 
 fromLists :: (Eq q, Eq a) => [q] -> [q] -> [q] -> [(q,a,[q])] -> Auto a q
