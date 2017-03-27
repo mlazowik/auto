@@ -94,6 +94,4 @@ toLists aut =
   ( states aut
   , initStates aut
   , filter (isAccepting aut) (states aut)
-  , filter notTrash (map (\(q, c) -> (q, c, transition aut q c)) [(q, c) | q <- states aut, c <- [minBound ..]]))
-  where
-    notTrash (_, _, qs) = not $ null qs
+  , [ (q, c, [qq]) | q <- states aut, c <- [minBound ..], qq <- transition aut q c ])
