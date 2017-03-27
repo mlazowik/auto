@@ -21,8 +21,11 @@ data Auto a q = A {
 , transition :: q -> a -> [q]
 }
 
+transitions :: (Functor t, Foldable t, Eq q) => Auto a q -> t q -> a -> [q]
+transitions aut fromStates c = List.nub $ concat $ flip (transition aut) c <$> fromStates
+
 accepts :: (Eq q) => Auto a q -> [a] -> Bool
-accepts aut w = any (isAccepting aut) (List.foldl' (\ s c -> List.nub $ concat $ flip (transition aut) c <$> s ) (initStates aut) w)
+accepts aut w = any (isAccepting aut) (List.foldl' (transitions aut) (initStates aut) w)
 
 trashTransition _ _ = []
 
