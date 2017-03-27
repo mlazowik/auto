@@ -37,12 +37,18 @@ symTransition c q a | not q && a == c = [True]
 symA :: (Eq a) => a -> Auto a Bool
 symA c = A {states = [True, False], initStates = [False], isAccepting = id, transition = symTransition c}
 
+leftTransition :: Auto a q -> q -> a -> [Either q r]
+leftTransition aut q c = Left <$> transition aut q c
+
+rightTransition :: Auto a r -> r -> a -> [Either q r]
+rightTransition aut q c = Right <$> transition aut q c
+
 leftA :: Auto a q -> Auto a (Either q r)
 leftA aut = A {
   states = Left <$> states aut
 , initStates = Left <$> initStates aut
 , isAccepting = either (isAccepting aut) (const False)
-, transition = either (\ q c -> Left <$> transition aut q c) (\ _ _ -> [])
+, transition = either (leftTransition aut) (\ _ _ -> [])
 }
 
 sumA :: Auto a q1 -> Auto a q2 -> Auto a (Either q1 q2)
@@ -50,18 +56,21 @@ sumA aut1 aut2 = A {
   states = (Left <$> states aut1) ++ (Right <$> states aut2)
 , initStates = (Left <$> initStates aut1) ++ (Right <$> initStates aut2)
 , isAccepting = either (isAccepting aut1) (isAccepting aut2)
-, transition = either (\ q c -> Left <$> transition aut1 q c) (\ q c -> Right <$> transition aut2 q c)
+, transition = either (leftTransition aut1) (rightTransition aut2)
 }
 
 hasAcceptingInitState :: Auto a q -> Bool
 hasAcceptingInitState aut = any (isAccepting aut) (initStates aut)
 
+rightStatesOrEmpty :: Bool -> [b] -> [Either a b]
+rightStatesOrEmpty predicate s = if predicate then Right <$> s else []
+
 thenA :: Auto a q1 -> Auto a q2 -> Auto a (Either q1 q2)
 thenA aut1 aut2 = A{
   states = (Left <$> states aut1) ++ (Right <$> states aut2)
-, initStates = (Left <$> initStates aut1) ++ (if hasAcceptingInitState aut1 then Right <$> initStates aut2 else [])
+, initStates = (Left <$> initStates aut1) ++ rightStatesOrEmpty (hasAcceptingInitState aut1) (initStates aut2)
 , isAccepting = either (if hasAcceptingInitState aut2 then isAccepting aut1 else const False) (isAccepting aut2)
-, transition = either (\ q c -> (Left <$> transition aut1 q c) ++ (if any (isAccepting aut1) (transition aut1 q c) then Right <$> initStates aut2 else [])) (\ q c -> Right <$> transition aut2 q c)
+, transition = either (\ q c -> (Left <$> transition aut1 q c) ++ rightStatesOrEmpty (any (isAccepting aut1) (transition aut1 q c)) (initStates aut2)) (rightTransition aut2)
 }
 
 fromLists :: (Eq q, Eq a) => [q] -> [q] -> [q] -> [(q,a,[q])] -> Auto a q
