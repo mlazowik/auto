@@ -84,7 +84,7 @@ fromLists s i a t =
   { states = s
   , initStates = i
   , isAccepting = (`elem` a)
-  , transition = \q c -> concat [ qs | (qq, cc, qs) <- t, qq == q, cc == c ]
+  , transition = \q c -> concat [qs | (qq, cc, qs) <- t, qq == q, cc == c]
   }
 
 toLists
@@ -94,4 +94,4 @@ toLists aut =
   ( states aut
   , initStates aut
   , filter (isAccepting aut) (states aut)
-  , [ (q, c, [qq]) | q <- states aut, c <- [minBound ..], qq <- transition aut q c ])
+  , [(q, c, [qq]) | q <- states aut, c <- [minBound ..], qq <- transition aut q c])
