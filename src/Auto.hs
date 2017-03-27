@@ -14,10 +14,10 @@ module Auto
 import qualified Data.List as List
 
 data Auto a q = A
-  { states      :: [q]
-  , initStates  :: [q]
+  { states :: [q]
+  , initStates :: [q]
   , isAccepting :: q -> Bool
-  , transition  :: q -> a -> [q]
+  , transition :: q -> a -> [q]
   }
 
 instance (Show a, Enum a, Bounded a, Show q) =>
