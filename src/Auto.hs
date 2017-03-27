@@ -67,9 +67,9 @@ sumA aut1 aut2 =
   }
 
 addLeftToRight :: Auto a q1 -> Auto a q2 -> [q1] -> [Either q1 q2]
-addLeftToRight aut1 aut2 toStates =
-  (Left <$> toStates) ++
-  (if any (isAccepting aut1) toStates
+addLeftToRight aut1 aut2 leftStates =
+  (Left <$> leftStates) ++
+  (if any (isAccepting aut1) leftStates
      then Right <$> initStates aut2
      else [])
 
