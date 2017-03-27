@@ -21,6 +21,9 @@ data Auto a q = A {
 , transition :: q -> a -> [q]
 }
 
+instance (Show a, Enum a, Bounded a, Show q) => Show (Auto a q) where
+  show = show . toLists
+
 transitions :: (Functor t, Foldable t, Eq q) => Auto a q -> t q -> a -> [q]
 transitions aut fromStates c = List.nub $ concat $ flip (transition aut) c <$> fromStates
 
