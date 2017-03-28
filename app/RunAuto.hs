@@ -32,7 +32,7 @@ parse _ = Nothing
 parseMaxState :: String -> Maybe Int
 parseMaxState input = do
   maxState <- readMaybe input
-  if maxState < 1
+  if maxState < 0
     then Nothing
     else return maxState
 
