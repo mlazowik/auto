@@ -15,13 +15,13 @@ cabal-version:       >=1.10
 
 library
   hs-source-dirs:      src
-  exposed-modules:     Data.String.Strip
+  exposed-modules:     Auto
   build-depends:       base >= 4.7 && < 5
   default-language:    Haskell2010
 
 executable zad1
   hs-source-dirs:      app
-  main-is:             Main.hs
+  main-is:             RunAuto.hs
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
   build-depends:       base
                      , zad1
