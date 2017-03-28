@@ -39,9 +39,7 @@ charInRange :: Char -> Bool
 charInRange = flip elem ['A' .. 'Z']
 
 parseWord :: String -> Maybe String
-parseWord input = do
-  word <- readMaybe input
-  if all charInRange word then return word else Nothing
+parseWord input = if all charInRange input then return input else Nothing
 
 parseTransition :: Int -> [String] -> Maybe [(Int, Char, [Int])]
 parseTransition maxState (s:zs:ss) = do
@@ -56,7 +54,7 @@ parseTransitions maxState input = concat <$> mapM (parseTransition maxState . wo
 
 parseLastList :: [String] -> Maybe String
 parseLastList [] = Nothing
-parseLastList lst = Just (last lst)
+parseLastList lst = parseWord (last lst)
 
 parse :: [String] -> Maybe ([Int], [Int], [Int], [(Int, Char, [Int])], String)
 parse (s:is:as:rest) = do
