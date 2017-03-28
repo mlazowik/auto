@@ -13,15 +13,21 @@ main = do
       putStrLn $ handle input
     else die "Usage: RunAuto filename"
 
-range
-  :: (Enum t, Num t)
-  => t -> [t]
-range n = [1 .. n]
+handle :: String -> String
+handle input = maybe "BAD INPUT" show (parse (getLines input))
+  where
+    getLines = (filter (not . null) .) lines
 
-stateInRange
-  :: (Num a, Ord a)
-  => a -> a -> Bool
-stateInRange n x = 1 <= x && x <= n
+parse :: [String] -> Maybe Bool
+parse (s:is:as:rest) = do
+  maxState <- parseMaxState s
+  let states = [1 .. maxState]
+  initStates <- parseStatesList maxState is
+  ackStates <- parseStatesList maxState as
+  transitions <- parseTransitions maxState $ init rest
+  word <- parseLastList rest
+  return (Auto.accepts (Auto.fromLists states initStates ackStates transitions) word)
+parse _ = Nothing
 
 parseMaxState :: String -> Maybe Int
 parseMaxState input = do
@@ -37,21 +43,8 @@ parseStatesList maxState input = do
     then return statesList
     else Nothing
 
-parseState :: Int -> String -> Maybe Int
-parseState maxState input = do
-  state <- readMaybe input
-  if stateInRange maxState state
-    then return state
-    else Nothing
-
-charInRange :: Char -> Bool
-charInRange = flip elem ['A' .. 'Z']
-
-parseWord :: String -> Maybe String
-parseWord input =
-  if all charInRange input
-    then return input
-    else Nothing
+parseTransitions :: Int -> [String] -> Maybe [(Int, Char, [Int])]
+parseTransitions maxState input = concat <$> mapM (parseTransition maxState . words) input
 
 parseTransition :: Int -> [String] -> Maybe [(Int, Char, [Int])]
 parseTransition maxState (s:zs:ss) = do
@@ -61,25 +54,28 @@ parseTransition maxState (s:zs:ss) = do
   return [(state, character, states) | character <- characters]
 parseTransition _ _ = Nothing
 
-parseTransitions :: Int -> [String] -> Maybe [(Int, Char, [Int])]
-parseTransitions maxState input = concat <$> mapM (parseTransition maxState . words) input
+parseState :: Int -> String -> Maybe Int
+parseState maxState input = do
+  state <- readMaybe input
+  if stateInRange maxState state
+    then return state
+    else Nothing
 
 parseLastList :: [String] -> Maybe String
 parseLastList [] = Nothing
 parseLastList lst = parseWord (last lst)
 
-parse :: [String] -> Maybe Bool
-parse (s:is:as:rest) = do
-  maxState <- parseMaxState s
-  let states = [1 .. maxState]
-  initStates <- parseStatesList maxState is
-  ackStates <- parseStatesList maxState as
-  transitions <- parseTransitions maxState $ init rest
-  word <- parseLastList rest
-  return (Auto.accepts (Auto.fromLists states initStates ackStates transitions) word)
-parse _ = Nothing
+parseWord :: String -> Maybe String
+parseWord input =
+  if all charInRange input
+    then return input
+    else Nothing
 
-handle :: String -> String
-handle input = maybe "BAD INPUT" show (parse (getLines input))
-  where
-    getLines = (filter (not . null) .) lines
+stateInRange
+  :: (Num a, Ord a)
+  => a -> a -> Bool
+stateInRange n x = 1 <= x && x <= n
+
+charInRange :: Char -> Bool
+charInRange = flip elem ['A' .. 'Z']
+
