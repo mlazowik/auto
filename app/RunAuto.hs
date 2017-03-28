@@ -17,6 +17,9 @@ main = do
 range :: (Enum t, Num t) => t -> [t]
 range n = [1..n]
 
+stateInRange :: (Num a, Ord a) => a -> a -> Bool
+stateInRange n x = 1 <= x && x <= n
+
 parseMaxState :: String -> Maybe Int
 parseMaxState input = do
   maxState <- readMaybe input
@@ -25,23 +28,44 @@ parseMaxState input = do
 parseStatesList :: Int -> String -> Maybe [Int]
 parseStatesList maxState input = do
   statesList <- readMaybe input
-  if all (\x -> 1 <= x && x <= maxState) statesList then return statesList else Nothing
+  if all (stateInRange maxState) statesList then return statesList else Nothing
 
-parseTransitions :: Int -> [String] -> Maybe [String]
-parseTransitions maxState = Just
+parseState :: Int -> String -> Maybe Int
+parseState maxState input = do
+  state <- readMaybe input
+  if stateInRange maxState state then return state else Nothing
 
-parseWord :: [String] -> Maybe String
-parseWord [] = Nothing
-parseWord lst = Just (last lst)
+charInRange :: Char -> Bool
+charInRange = flip elem ['A' .. 'Z']
 
-parse :: [String] -> Maybe ([Int], [Int], [Int], [String], String)
+parseWord :: String -> Maybe String
+parseWord input = do
+  word <- readMaybe input
+  if all charInRange word then return word else Nothing
+
+parseTransition :: Int -> [String] -> Maybe [(Int, Char, [Int])]
+parseTransition maxState (s:zs:ss) = do
+  state <- parseState maxState s
+  characters <- parseWord zs
+  states <- mapM readMaybe ss
+  return [(state, character, states) | character <- characters]
+parseTransition _ _ = Nothing
+
+parseTransitions :: Int -> [String] -> Maybe [(Int, Char, [Int])]
+parseTransitions maxState input = concat <$> mapM (parseTransition maxState . words) input
+
+parseLastList :: [String] -> Maybe String
+parseLastList [] = Nothing
+parseLastList lst = Just (last lst)
+
+parse :: [String] -> Maybe ([Int], [Int], [Int], [(Int, Char, [Int])], String)
 parse (s:is:as:rest) = do
   maxState <- parseMaxState s
   let states = [1..maxState]
   initStates <- parseStatesList maxState is
   ackStates <- parseStatesList maxState as
   transitions <- parseTransitions maxState $ init rest
-  word <- parseWord rest
+  word <- parseLastList rest
   return (states, initStates, ackStates, transitions, word)
 parse _ = Nothing
 
