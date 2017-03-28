@@ -56,7 +56,7 @@ parseLastList :: [String] -> Maybe String
 parseLastList [] = Nothing
 parseLastList lst = parseWord (last lst)
 
-parse :: [String] -> Maybe ([Int], [Int], [Int], [(Int, Char, [Int])], String)
+parse :: [String] -> Maybe Bool
 parse (s:is:as:rest) = do
   maxState <- parseMaxState s
   let states = [1..maxState]
@@ -64,10 +64,10 @@ parse (s:is:as:rest) = do
   ackStates <- parseStatesList maxState as
   transitions <- parseTransitions maxState $ init rest
   word <- parseLastList rest
-  return (states, initStates, ackStates, transitions, word)
+  return (Auto.accepts (Auto.fromLists states initStates ackStates transitions) word)
 parse _ = Nothing
 
 handle :: String -> String
-handle input = show $ parse (getLines input)
+handle input = maybe "BAD INPUT" show (parse (getLines input))
   where
     getLines = (filter (not . null) .) lines
