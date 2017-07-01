@@ -1,3 +1,4 @@
+import Control.Monad (when)
 import System.Environment (getArgs)
 import System.Exit (die)
 import Text.Read (readMaybe)
@@ -24,6 +25,7 @@ parse (s:is:as:rest) = do
   let states = [1 .. maxState]
   initStates <- parseStatesList maxState is
   ackStates <- parseStatesList maxState as
+  Control.Monad.when (null rest) Nothing
   transitions <- parseTransitions maxState $ init rest
   word <- parseLastList rest
   return (Auto.accepts (Auto.fromLists states initStates ackStates transitions) word)
